@@ -30,7 +30,6 @@ This solution will:
 huaweicloud-solution-oracle-rac-in-cloud
 ├── oracle-rac-in-cloud-ecs.tf.json -- Resource orchestration template for ECSs and an existing VPC
 ├── oracle-rac-in-cloud-ecs-new-vpc.tf.json -- Resource orchestration template for ECSs and a new VPC
-├── oracle-rac-in-cloud-bms.tf.json.tf.json -- Resource orchestration template for BMSs
     ├── oracle_init.sh  -- Script configuration file
 ```
 **Getting Started**
