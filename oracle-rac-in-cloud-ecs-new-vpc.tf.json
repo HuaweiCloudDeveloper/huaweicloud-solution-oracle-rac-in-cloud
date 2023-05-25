@@ -1,0 +1,587 @@
+{
+    "terraform": {
+        "required_providers": [
+            {
+                "huaweicloud": {
+                    "source": "huawei.com/provider/huaweicloud",
+                    "version": "1.37.1"
+                }
+            }
+        ]
+    },
+    "provider": {
+        "huaweicloud": {
+            "cloud": "myhuaweicloud.com",
+            "endpoints": {
+                "iam": "iam.ap-southeast-3.myhuaweicloud.com",
+                "dns": "dns.ap-southeast-3.myhuaweicloud.com",
+                "bss": "bss.myhuaweicloud.com"
+            },
+            "insecure": true,
+            "region": "ap-southeast-3",
+            "auth_url": "https://iam.ap-southeast-3.myhuaweicloud.com/v3"
+        }
+    },
+    "variable": {
+        "availability_zone": {
+            "default": "ap-southeast-3a",
+            "description": "AZ where the solution is to be deployed. For details about AZ information, see the regions and endpoints at https://developer.huaweicloud.com/intl/en-us/endpoint?all. Default value: ap-southeast-3a ",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${contains([\"ap-southeast-3a\",\"ap-southeast-3b\",\"ap-southeast-3c\"], var.availability_zone)}",
+                "error_message": "Invalid input, please re-enter."
+            }
+        },
+        "oracle_version": {
+            "default": "11g",
+            "description": "Oracle database version. Currently, 11g, 12c, and 19c are supported. Default value: 11g ",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${contains([\"11g\",\"12c\",\"19c\"], var.oracle_version)}",
+                "error_message": "Invalid input, please re-enter."
+            }
+        },
+        "vpc_name": {
+            "default": "oracle_rac_in_cloud_ecs_new_vpc_demo",
+            "description": "Virtual Private Cloud (VPC) name. This template uses a newly created VPC and the VPC name must be unique. The value contains 1 to 56 characters, including digits, letters, underscores (_), hyphens (-), and periods (.). The default value is oracle_rac_in_cloud_ecs_new_vpc_demo. ",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^[\\\\w\\\\.-]{1,56}$\",var.vpc_name))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "vpc_cidr": {
+            "default": "192.168.0.0/16",
+            "description": "VPC CIDR block. Value range: 10.0.0.0/8–24, 172.16.0.0/12–24, 192.168.0.0/16–24. Default value: 192.168.0.0/16. ",
+            "type": "string",
+            "nullable": false,
+             "validation": {
+                "condition": "${length(regexall(\"^10.+|172.+|192.+\",var.vpc_cidr))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "subnet_public_cidr": {
+            "default": "192.168.0.0/24",
+            "description": "Public subnet CIDR block. Value range: 10.0.0.0/8–24, 172.16.0.0/12–24, 192.168.0.0/16–24. Default value: 192.168.0.0/24. ",
+            "type": "string",
+            "nullable": false,
+             "validation": {
+                "condition": "${length(regexall(\"^10.+|172.+|192.+\",var.subnet_public_cidr))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "subnet_private_cidr": {
+            "default": "192.168.1.0/24",
+            "description": "Private subnet CIDR block. Value range: 10.0.0.0/8–24, 172.16.0.0/12–24, 192.168.0.0/16–24. Default value: 192.168.1.0/24. ",
+            "type": "string",
+            "nullable": false,
+             "validation": {
+                "condition": "${length(regexall(\"^10.+|172.+|192.+\",var.subnet_private_cidr))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "public_ip_1": {
+            "default": "192.168.0.2",
+            "description": "Private IP address of the public subnet NIC of the first ECS. Value range: the IP addresses within the CIDR block of the public subnet. Default value: 192.168.0.2 ",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))$\",var.public_ip_1))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "public_ip_2": {
+            "default": "192.168.0.3",
+            "description": "Private IP address of the public subnet NIC of the second ECS. Value range: the IP addresses within the CIDR block of the public subnet. Default value: 192.168.0.3 ",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))$\",var.public_ip_2))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "private_ip_1": {
+            "default": "192.168.1.2",
+            "description": "Private IP address of the private subnet NIC of the first ECS. Value range: the IP addresses within the CIDR block of the private subnet. Default value: 192.168.1.2 ",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))$\",var.private_ip_1))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "private_ip_2": {
+            "default": "192.168.1.3",
+            "description": "Private IP address of the private subnet NIC of the second ECS. Value range: the IP addresses within the CIDR block of the private subnet. Default value: 192.168.1.3 ",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))$\",var.private_ip_2))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "scan_vip": {
+            "default": "192.168.0.4",
+            "description": "Virtual IP address of the public subnet NIC for all the ECSs. Value range: the IP addresses within the CIDR block of the public subnet. Default value: 192.168.0.4 ",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))$\",var.scan_vip))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "vip_1": {
+            "default": "192.168.0.5",
+            "description": "Virtual IP address of the public subnet NIC for all the ECSs. Value range: the IP addresses within the CIDR block of the public subnet. Default value: 192.168.0.5 ",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))$\",var.vip_1))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "vip_2": {
+            "default": "192.168.0.6",
+            "description": "Virtual IP address of the public subnet NIC for all the ECSs. Value range: the IP addresses within the CIDR block of the public subnet. Default value: 192.168.0.6 ",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))$\",var.vip_2))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "security_group_name": {
+            "default": "oracle_rac_in_cloud_ecs_new_vpc_demo",
+            "description": "Security group name. This template uses a newly created security group. For details about how to set security group rules, see the deployment guide. The value contains 1 to 64 characters, including digits, letters, underscores (_), hyphens (-), and periods (.). The default value is oracle_rac_in_cloud_ecs_new_vpc_demo. ",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^[\\\\w\\\\.-]{1,64}$\",var.security_group_name))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "ecs_name": {
+            "default": "oracle_rac_in_cloud_ecs_new_vpc_demo",
+            "description": "ECS name, which must be unique. The name consists of 1 to 52 characters, only including letters, digits, underscores (_), hyphens (-), and periods (.). Default value: oracle_rac_in_cloud_ecs_new_vpc_demo ",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^[a-zA-Z0-9_\\\\.-]{1,52}$\",var.ecs_name))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "ecs_image": {
+            "default": "CentOS 7.6 64bit",
+            "description": "ECS image OS. For more image OSs, see the deployment guide. Default value: CentOS 7.6 64bit ",
+            "type": "string",
+            "nullable": false,
+             "validation": {
+                "condition": "${length(regexall(\"^([A-Za-z0-9\\\\s\\\\.])+([A-Za-z0-9])$\",var.ecs_image))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "image_visibility": {
+            "default": "public",
+            "description": "Image type. The image type can be public (public image), private (private image), or shared (shared image). Default value: public ",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${contains([\"public\",\"private\",\"shared\"], var.image_visibility)}",
+                "error_message": "Invalid input, please re-enter."
+            }
+        },
+        "ecs_flavor": {
+            "default": "c6.2xlarge.4",
+            "description": "ECS flavor. For more flavors, see the deployment guide. Default value: c6.2xlarge.4 (8Core|32G) ",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^([a-z][a-z0-9]{0,3}\\\\.)(small\\\\.|medium\\\\.|(x||[1-9][0-9]{0,1}x)large\\\\.)[1-9][0-9]{0,1}$\",var.ecs_flavor))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "password": {
+            "default": "",
+            "description": "Password for ECS login and Oracle user. After an ECS is created, change the password by following the instructions provided in the deployment guide. Value range: 8 to 26 characters, containing at least three of the following character types: uppercase letters, lowercase letters, digits, and special characters (!@$%^-_=+[{}]:,./?), and cannot contain the username or the username spelled backwards. ",
+            "type": "string",
+            "nullable": false,
+            "sensitive": true
+        },
+        "system_disk_size": {
+            "default": "150",
+            "description": "System disk volume of the ECS. The value ranges from 40 to 1024 in the unit of GB. Default value: 150 ",
+            "type": "number",
+            "nullable": false,
+             "validation": {
+                "condition": "${length(regexall(\"^([4-9]\\\\d|[1-9]\\\\d{2}|10[0-1][0-9]|102[0-4])$\",var.system_disk_size))>0}",
+                "error_message": "Invalid input, please re-enter."
+            }
+        },
+        "charging_mode": {
+            "default": "postPaid",
+            "description": "Billing mode of the ECS and EVS. The value can be prePaid (yearly/monthly) or postPaid (pay-per-use). Default value: postPaid ",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${contains([\"postPaid\",\"prePaid\"], var.charging_mode)}",
+                "error_message": "Invalid input, please re-enter."
+            }
+        },
+        "period_unit": {
+            "default": "month",
+            "description": "Subscription period unit of ECSs and EVS disks. This parameter is valid only when charging_mode is set to prePaid. The value can be month or year. Default value: month ",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${contains([\"month\",\"year\"], var.period_unit)}",
+                "error_message": "Invalid input, please re-enter."
+            }
+        },
+        "period": {
+            "default": 1,
+            "description": "Subscription period unit of ECSs and EVS disks. This parameter is valid only when charging_mode is set to prePaid. When period_unit is set to month, the value ranges from 1 to 9. When period_unit is set to year, the value ranges from 1 to 3. Default value: 1 ",
+            "type": "number",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^[1-9]$\",var.period))>0}",
+                "error_message": "Invalid input, please re-enter."
+            }
+        },
+        "evs_volume_type": {
+            "default": "ESSD",
+            "type": "string",
+            "description": "EVS data disk type. Value range: ESSD (Extreme SSD), SSD (ultra-high I/O). Default value: ESSD (Extreme SSD) ",
+            "nullable": false,
+             "validation": {
+                "condition": "${contains([\"ESSD\",\"SSD\"], var.evs_volume_type)}",
+                "error_message": "Invalid input, please re-enter."
+            }
+        },
+        "evs_data_count": {
+            "default": 1,
+            "type": "number",
+            "description": "Number of data disks. They are used as database data disks. Value range: 1-10. Default value: 1 ",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^([1-9]|10)$\",var.evs_data_count))>0}",
+                "error_message": "Invalid input, please re-enter."
+            }
+        },
+        "evs_data_size": {
+            "default": 10,
+            "type": "number",
+            "description": "Data disk volume. The value ranges from 10 to 32768 in the unit of GB. Default value: 10 ",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^([1-9]\\\\d{1,3}|[1-2]\\\\d{4}|3[0-1]\\\\d{3}|32[0-6]\\\\d{2}|327[0-5]\\\\d|3276[0-8])$\",var.evs_data_size))>0}",
+                "error_message": "Invalid input, please re-enter."
+            }
+        },
+        "evs_flash_count": {
+            "default": 1,
+            "type": "number",
+            "description": "Number of flash disks. They are used as database flash disks. Value range: 1-10. Default value: 1 ",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^([1-9]|10)$\",var.evs_flash_count))>0}",
+                "error_message": "Invalid input, please re-enter."
+            }
+        },
+        "evs_flash_size": {
+            "default": 10,
+            "type": "number",
+            "description": "Flash disk volume. The value ranges from 10 to 32768 in the unit of GB. Default value: 10 ",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^([1-9]\\\\d{1,3}|[1-2]\\\\d{4}|3[0-1]\\\\d{3}|32[0-6]\\\\d{2}|327[0-5]\\\\d|3276[0-8])$\",var.evs_flash_size))>0}",
+                "error_message": "Invalid input, please re-enter."
+            }
+        },
+        "evs_ocr_count": {
+            "default": 3,
+            "type": "number",
+            "description": "Number of OCR data disks. The OCR data disks are used for disk election. The value can be 3, 5, 7, or 9. Default value: 3 ",
+            "nullable": false,
+             "validation": {
+                "condition": "${contains([3,5,7,9], var.evs_ocr_count)}",
+                "error_message": "Invalid input, please re-enter."
+            }
+        },
+        "evs_ocr_size": {
+            "default": 10,
+            "type": "number",
+            "description": "OCR data disk volume. The OCR data disks are used for disk election. The value ranges from 10 to 32768 in the unit of GB. Default value: 10 ",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^([1-9]\\\\d{1,3}|[1-2]\\\\d{4}|3[0-1]\\\\d{3}|32[0-6]\\\\d{2}|327[0-5]\\\\d|3276[0-8])$\",var.evs_ocr_size))>0}",
+                "error_message": "Invalid input, please re-enter."
+            }
+        },
+        "evs_mgmt_count": {
+            "default": 1,
+            "type": "number",
+            "description": "Number of MGMTDB data disks. The data disks are used by the MGMTDB database. Value range: 0-23. Default value: 1 ",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^(\\\\d|1\\\\d|2[0-3])$\",var.evs_mgmt_count))>0}",
+                "error_message": "Invalid input, please re-enter."
+            }
+        },
+        "evs_mgmt_size": {
+            "default": 10,
+            "type": "number",
+            "description": "MGMTDB data disk volume. The value ranges from 10 to 32768 in the unit of GB. Default value: 10 ",
+            "nullable": false,
+             "validation": {
+                "condition": "${length(regexall(\"^([1-9]\\\\d{1,3}|[1-2]\\\\d{4}|3[0-1]\\\\d{3}|32[0-6]\\\\d{2}|327[0-5]\\\\d|3276[0-8])$\",var.evs_mgmt_size))>0}",
+                "error_message": "Invalid input, please re-enter."
+            }
+        }
+    },
+    "data": {
+        "huaweicloud_images_image": {
+            "image": {
+                "most_recent": true,
+                "name": "${var.ecs_image}",
+                "visibility": "${var.image_visibility}"
+            }
+        }
+    },
+    "resource": {
+        "huaweicloud_vpc": {
+            "vpc": {
+                "cidr": "${var.vpc_cidr}",
+                "name": "${var.vpc_name}"
+            }
+        },
+        "huaweicloud_vpc_subnet": {
+            "subnet_public": {
+                "cidr": "${var.subnet_public_cidr}",
+                "gateway_ip": "${cidrhost(var.subnet_public_cidr,1)}",
+                "name": "${var.vpc_name}-public",
+                "vpc_id": "${huaweicloud_vpc.vpc.id}"
+            },
+            "subnet_private": {
+                "cidr": "${var.subnet_private_cidr}",
+                "gateway_ip": "${cidrhost(var.subnet_private_cidr,1)}",
+                "name": "${var.vpc_name}-private",
+                "vpc_id": "${huaweicloud_vpc.vpc.id}"
+            }
+        },
+        "huaweicloud_networking_secgroup": {
+            "secgroup": {
+                "name": "${var.security_group_name}"
+            }
+        },
+        "huaweicloud_networking_secgroup_rule": {
+            "allow_vnc": {
+                "description": "Allows remote access to the ECS GUI.",
+                "direction": "ingress",
+                "ethertype": "IPv4",
+                "ports": "5901",
+                "protocol": "tcp",
+                "remote_ip_prefix": "0.0.0.0/0",
+                "security_group_id": "${huaweicloud_networking_secgroup.secgroup.id}"
+            },
+            "allow_HAIP": {
+                "description": "Allows heartbeat communication within the Oracle RAC cluster.",
+                "direction": "ingress",
+                "ethertype": "IPv4",
+                "remote_ip_prefix": "169.254.0.0/16",
+                "security_group_id": "${huaweicloud_networking_secgroup.secgroup.id}"
+            },
+            "allow_public": {
+                "description": "Allows traffic from the CIDR block of Oracle database public subnet.",
+                "direction": "ingress",
+                "ethertype": "IPv4",
+                "remote_ip_prefix": "${var.subnet_public_cidr}",
+                "security_group_id": "${huaweicloud_networking_secgroup.secgroup.id}"
+            },
+            "allow_private": {
+                "description": "Allows traffic from the CIDR block of Oracle database private subnet.",
+                "direction": "ingress",
+                "ethertype": "IPv4",
+                "remote_ip_prefix": "${var.subnet_private_cidr}",
+                "security_group_id": "${huaweicloud_networking_secgroup.secgroup.id}"
+            }
+        },
+        "huaweicloud_compute_servergroup": {
+            "servergroup": {
+                "name": "${var.ecs_name}-servergroup",
+                "policies": [
+                    "anti-affinity"
+                ]
+            }
+        },
+        "huaweicloud_compute_instance": {
+            "ecs": {
+                "availability_zone": "${var.availability_zone}",
+                "charging_mode": "${var.charging_mode}",
+                "period_unit": "${var.period_unit}",
+                "period": "${var.period}",
+                "auto_pay": true,
+                "count": 2,
+                "flavor_id": "${var.ecs_flavor}",
+                "image_id": "${data.huaweicloud_images_image.image.id}",
+                "name": "${var.ecs_name}-${count.index+1}",
+                "system_disk_type": "SSD",
+                "system_disk_size": "${var.system_disk_size}",
+                "network": [
+                    {
+                        "fixed_ip_v4": "${count.index == 0 ? var.public_ip_1 : var.public_ip_2}",
+                        "source_dest_check": false,
+                        "uuid": "${huaweicloud_vpc_subnet.subnet_public.id}"
+                    },
+                    {
+                        "fixed_ip_v4": "${count.index == 0 ? var.private_ip_1 : var.private_ip_2}",
+                        "source_dest_check": false,
+                        "uuid": "${huaweicloud_vpc_subnet.subnet_private.id}"
+                    }
+                ],
+                "scheduler_hints": [
+                    {
+                        "group": "${huaweicloud_compute_servergroup.servergroup.id}"
+                    }
+                ],
+                "security_group_ids": [
+                    "${huaweicloud_networking_secgroup.secgroup.id}"
+                ],
+                "user_data": "#! /bin/bash\necho 'root:${var.password}' | chpasswd\nwget -P /tmp/ https://documentation-samples.obs.cn-north-4.myhuaweicloud.com/solution-as-code-publicbucket/solution-as-code-moudle/oracle-rac-in-cloud/userdata/oracle_init.sh\nchmod 700 /tmp/oracle_init.sh\n/tmp/oracle_init.sh '${var.password}' '2' '${var.ecs_name}' '${var.oracle_version}' '${var.public_ip_1}' '${var.private_ip_1}' '${var.vip_1}' '${var.public_ip_2}' '${var.private_ip_2}' '${var.vip_2}' '${var.scan_vip}' > /tmp/tmp.log 2>&1\nrm -f /tmp/oracle_init.sh\n"
+            }
+        },
+        "huaweicloud_vpc_eip": {
+            "eip": {
+                "bandwidth": [
+                    {
+                        "charge_mode": "traffic",
+                        "name": "${var.ecs_name}_${count.index+1}",
+                        "share_type": "PER",
+                        "size": 100
+                    }
+                ],
+                "count": 2,
+                "publicip": [
+                    {
+                        "type": "5_bgp"
+                    }
+                ]
+            }
+        },
+        "huaweicloud_compute_eip_associate": {
+            "associated": {
+                "count": 2,
+                "instance_id": "${huaweicloud_compute_instance.ecs[count.index].id}",
+                "public_ip": "${huaweicloud_vpc_eip.eip[count.index].address}"
+            }
+        },
+        "huaweicloud_networking_vip": {
+            "vip": {
+                "count": 3,
+                "ip_address": "${count.index == 0 ? var.scan_vip : count.index == 1 ? var.vip_1 : var.vip_2}",
+                "network_id": "${huaweicloud_vpc_subnet.subnet_public.id}"
+            }
+        },
+        "huaweicloud_networking_vip_associate": {
+            "vip_associated": {
+                "count": 3,
+                "port_ids": "${huaweicloud_compute_instance.ecs[*].network.0.port}",
+                "vip_id": "${huaweicloud_networking_vip.vip[count.index].id}"
+            }
+        },
+        "huaweicloud_evs_volume": {
+            "data": {
+                "charging_mode": "${var.charging_mode}",
+                "period_unit": "${var.period_unit}",
+                "period": "${var.period}",
+                "availability_zone": "${huaweicloud_compute_instance.ecs[0].availability_zone}",
+                "count": "${var.evs_data_count}",
+                "device_type": "SCSI",
+                "multiattach": true,
+                "name": "${var.ecs_name}-data-${count.index+1}",
+                "size": "${var.evs_data_size}",
+                "volume_type": "${var.evs_volume_type}"
+            },
+            "flash": {
+                "charging_mode": "${var.charging_mode}",
+                "period_unit": "${var.period_unit}",
+                "period": "${var.period}",
+                "availability_zone": "${huaweicloud_compute_instance.ecs[0].availability_zone}",
+                "count": "${var.evs_flash_count}",
+                "device_type": "SCSI",
+                "multiattach": true,
+                "name": "${var.ecs_name}-flash-${count.index+1}",
+                "size": "${var.evs_flash_size}",
+                "volume_type": "${var.evs_volume_type}"
+            },
+            "ocr": {
+                "charging_mode": "${var.charging_mode}",
+                "period_unit": "${var.period_unit}",
+                "period": "${var.period}",
+                "availability_zone": "${huaweicloud_compute_instance.ecs[0].availability_zone}",
+                "count": "${var.evs_ocr_count}",
+                "device_type": "SCSI",
+                "multiattach": true,
+                "name": "${var.ecs_name}-ocr-${count.index+1}",
+                "size": "${var.evs_ocr_size}",
+                "volume_type": "${var.evs_volume_type}"
+            },
+            "mgmt": {
+                "charging_mode": "${var.charging_mode}",
+                "period_unit": "${var.period_unit}",
+                "period": "${var.period}",
+                "availability_zone": "${huaweicloud_compute_instance.ecs[0].availability_zone}",
+                "count": "${var.evs_mgmt_count}",
+                "device_type": "SCSI",
+                "multiattach": true,
+                "name": "${var.ecs_name}-mgmt-${count.index+1}",
+                "size": "${var.evs_mgmt_size}",
+                "volume_type": "${var.evs_volume_type}"
+            }
+        },
+        "huaweicloud_compute_volume_attach": {
+            "data_ecs1_attachments": {
+                "count": "${var.evs_data_count}",
+                "instance_id": "${huaweicloud_compute_instance.ecs[0].id}",
+                "volume_id": "${huaweicloud_evs_volume.data[count.index].id}"
+            },
+            "data_ecs2_attachments": {
+                "count": "${var.evs_data_count}",
+                "instance_id": "${huaweicloud_compute_instance.ecs[1].id}",
+                "volume_id": "${huaweicloud_evs_volume.data[count.index].id}"
+            },
+            "flash_ecs1_attachments": {
+                "count": "${var.evs_flash_count}",
+                "instance_id": "${huaweicloud_compute_instance.ecs[0].id}",
+                "volume_id": "${huaweicloud_evs_volume.flash[count.index].id}"
+            },
+            "flash_ecs2_attachments": {
+                "count": "${var.evs_flash_count}",
+                "instance_id": "${huaweicloud_compute_instance.ecs[1].id}",
+                "volume_id": "${huaweicloud_evs_volume.flash[count.index].id}"
+            },
+            "ocr_ecs1_attachments": {
+                "count": "${var.evs_ocr_count}",
+                "instance_id": "${huaweicloud_compute_instance.ecs[0].id}",
+                "volume_id": "${huaweicloud_evs_volume.ocr[count.index].id}"
+            },
+            "ocr_ecs2_attachments": {
+                "count": "${var.evs_ocr_count}",
+                "instance_id": "${huaweicloud_compute_instance.ecs[1].id}",
+                "volume_id": "${huaweicloud_evs_volume.ocr[count.index].id}"
+            },
+            "mgmt_ecs1_attachments": {
+                "count": "${var.evs_mgmt_count}",
+                "instance_id": "${huaweicloud_compute_instance.ecs[0].id}",
+                "volume_id": "${huaweicloud_evs_volume.mgmt[count.index].id}"
+            },
+            "mgmt_ecs2_attachments": {
+                "count": "${var.evs_mgmt_count}",
+                "instance_id": "${huaweicloud_compute_instance.ecs[1].id}",
+                "volume_id": "${huaweicloud_evs_volume.mgmt[count.index].id}"
+            }
+        }
+    }
+}
