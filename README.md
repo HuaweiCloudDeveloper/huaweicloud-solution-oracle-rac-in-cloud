@@ -12,7 +12,7 @@ For more details about this solution, visit: https://www.huaweicloud.com/intl/en
 
 **Architecture**
 ---------------
-![Solution Architecture](./document/Database-Migration-to-Cloud.png)
+![Solution Architecture](./document/oracle-rac-in-cloud.png)
 
 **Architecture Description**
 ---------------
