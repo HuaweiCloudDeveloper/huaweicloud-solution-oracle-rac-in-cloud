@@ -363,6 +363,3 @@ EOF
 #systemctl stop ntpd.service
 #systemctl disable avahi-daemon.service
 #systemctl stop avahi-daemon.service 
-
-
-
